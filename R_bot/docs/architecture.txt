@@ -1,0 +1,63 @@
+mobile_arm_robot/
+├── hardware/                    # Wiring diagrams & Bill of Materials (BOM)
+│   ├── bom.csv                  # Components list with prices & suppliers
+│   ├── wiring_diagram.pdf       # Full electrical wiring schematic
+│   └── 3d_models/               # STL files for custom printed parts
+│
+├── ros2_ws/
+│   └── src/
+│       ├── robot_description/   # URDF / SDF — full robot model
+│       │   ├── urdf/
+│       │   ├── meshes/
+│       │   └── launch/
+│       │
+│       ├── robot_bringup/       # Launch files — brings up the full robot
+│       │   ├── launch/
+│       │   │   ├── robot.launch.py        # Full system launch
+│       │   │   ├── simulation.launch.py   # Gazebo simulation
+│       │   │   └── teleop.launch.py       # Manual control
+│       │   └── config/
+│       │
+│       ├── robot_navigation/    # Nav2 stack + SLAM Toolbox
+│       │   ├── launch/
+│       │   ├── maps/            # Pre-built maps (.pgm + .yaml)
+│       │   └── config/
+│       │       ├── nav2_params.yaml
+│       │       └── slam_params.yaml
+│       │
+│       ├── robot_perception/    # YOLO node + camera pipeline
+│       │   ├── robot_perception/
+│       │   │   ├── yolo_node.py           # Object detection publisher
+│       │   │   └── camera_node.py         # Camera stream handler
+│       │   ├── models/          # YOLO weights (.pt files)
+│       │   └── config/
+│       │
+│       └── robot_arm/           # MoveIt 2 config + pick & place
+│           ├── launch/
+│           ├── config/
+│           │   ├── moveit.yaml
+│           │   └── kinematics.yaml
+│           └── scripts/
+│               └── pick_and_place.py
+│
+├── firmware/                    # Arduino code — motors & I²C bridge
+│   ├── motor_controller/
+│   │   └── motor_controller.ino
+│   └── arm_controller/
+│       └── arm_controller.ino
+│
+├── docs/                        # Diagrams, videos & results
+│   ├── demo.gif                 # Main demo (used in README header)
+│   ├── architecture.txt         # System architecture diagram
+│   └── results/                 # Test logs, performance metrics
+│
+├── docker/                      # (bonus) Dockerfile for easy setup
+│   └── Dockerfile
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # (bonus) Basic CI — build check
+│
+├── requirements.txt             # Python dependencies (ultralytics, etc.)
+├── LICENSE                      # MIT recommended
+└── README.md                    # Demo GIF at top — the most important file
