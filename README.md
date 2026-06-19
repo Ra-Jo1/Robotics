@@ -23,7 +23,7 @@ To support this transition, I am actively developing skills in:
 * Embedded systems basics
 * Computer vision and sensor data processing
 
-This repository will include projects, experiments, and learning notes related to these topics.
+This repository will include projects, experiments, and learning notes related to these topics, In my first project I use IA Claude.
 
 Goals
 
