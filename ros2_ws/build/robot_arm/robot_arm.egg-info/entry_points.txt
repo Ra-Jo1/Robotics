@@ -1,2 +1,0 @@
-[console_scripts]
-arm_node = robot_arm.arm_node:main
