@@ -16,6 +16,7 @@ setup(
     entry_points={
         'console_scripts': [
             'arm_node = robot_arm.arm_node:main',
+            'pick_and_place_node = robot_arm.pick_and_place_node:main',
         ],
     },
 )
