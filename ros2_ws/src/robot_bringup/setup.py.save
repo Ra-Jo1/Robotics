@@ -1,0 +1,46 @@
+^Del             Delete forward from cursor to next word start
+M-T              Cut from the cursor position to the end of the file
+
+M-J              Justify the entire file
+M-D              Count the number of lines, words, and characters
+M-V              Insert the next keystroke verbatim
+
+M-}              Indent the current line (or marked lines)
+M-{    (Sh-Tab)  Unindent the current line (or marked lines)
+
+M-3              Comment/uncomment the current line (or marked lines)
+^]               Try and complete the current word
+
+M-:              Start/stop recording a macro
+M-;              Run the last recorded macro
+
+M-Del            Throw away the current line (or marked region)
+
+M-Ins            Place or remove an anchor at the current line
+M-PgUp           Jump backward to the nearest anchor
+M-PgDn           Jump forward to the nearest anchor
+
+F12              Invoke the spell checker, if available
+M-B              Invoke the linter, if available
+M-F              Invoke a program to format/arrange/manipulate the buffer
+
+		 Suspend the editor (return to the shell)
+^L               Refresh (redraw) the current screen
+^L               Center the line where the cursor is
+
+^S               Save file without prompting
+
+M-Z		 Hidden interface enable/disable
+M-X		 Help mode enable/disable
+M-C		 Constant cursor position display enable/disable
+M-S		 Soft wrapping of overlong lines enable/disable
+M-N		 Line numbering enable/disable
+M-P		 Whitespace display enable/disable
+M-Y		 Color syntax highlighting enable/disable
+
+M-H		 Smart home key enable/disable
+M-I		 Auto indent enable/disable
+M-K		 Cut to end enable/disable
+M-L		 Hard wrapping of overlong lines enable/disable
+M-O		 Conversion of typed tabs to spaces enable/disable
+M-M		 Mouse support enable/disable
