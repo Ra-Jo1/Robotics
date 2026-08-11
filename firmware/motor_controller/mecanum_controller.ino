@@ -45,6 +45,13 @@
 #define BAUD_RATE   115200
 
 // =====================
+// HC-SR04 PINS
+// =====================
+#define TRIG_PIN 30
+#define ECHO_PIN 31
+#define OBSTACLE_DISTANCE_CM 25  // Stop threshold in cm
+
+// =====================
 // VARIABLES
 // =====================
 float vx = 0;
@@ -69,15 +76,38 @@ void setup() {
 
   stopAll();
   Serial.begin(BAUD_RATE);
+  // Ultrasonic sensor setup
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
   Serial.println("{\"status\":\"ready\", \"mode\":\"mecanum_4roues\"}");
 
   //testRotation();
 }
 
 // =====================
+// ULTRASONIC SENSOR
+// =====================
+float readDistanceCM() {
+  // Send ultrasonic pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Read echo duration
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+
+  // Convert to cm (speed of sound = 343m/s)
+  if (duration == 0) return 999.0;  // No obstacle detected
+  return (duration * 0.0343) / 2.0;
+}
+
+// =====================
 // LOOP
 // =====================
 void loop() {
+  // Read Serial commands
   while (Serial.available()) {
     char c = Serial.read();
     if (c == '\n') {
@@ -88,6 +118,26 @@ void loop() {
     }
   }
 
+  // Read distance every 100ms
+  static unsigned long last_sensor_time = 0;
+  if (millis() - last_sensor_time > 100) {
+    last_sensor_time = millis();
+
+    float distance = readDistanceCM();
+
+    // Publish distance as JSON
+    Serial.print("{\"dist\":");
+    Serial.print(distance, 1);
+    Serial.println("}");
+
+    // Safety stop if obstacle detected
+    if (distance < OBSTACLE_DISTANCE_CM) {
+      stopAll();
+      vx = 0; vy = 0; wz = 0;
+    }
+  }
+
+  // Timeout safety
   if (millis() - last_cmd_time > TIMEOUT_MS) {
     stopAll();
   } else {
@@ -186,10 +236,10 @@ void stopAll() {
 // =====================
 // TEST AU DÉMARRAGE
 // =====================
-void testRotation() {
-  delay(1000);                  // Attends 1 sec après démarrage
-  driveMecanum(1, 0, 0);
-  delay(3000);                  // Pendant 3 secondes
-  stopAll();                    // Stop
-  Serial.println("{\"test\":\"done\"}");
-}
+//void testRotation() {
+  //delay(1000);                  // Attends 1 sec après démarrage
+  //driveMecanum(1, 0, 0);
+  //delay(3000);                  // Pendant 3 secondes
+  //stopAll();                    // Stop
+  //Serial.println("{\"test\":\"done\"}");
+//}
