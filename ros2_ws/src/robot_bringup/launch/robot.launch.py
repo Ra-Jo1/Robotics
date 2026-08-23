@@ -64,7 +64,16 @@ def generate_launch_description():
             name='teleop',
             output='screen',
             prefix='xterm -e',
+            remappings=[('/cmd_vel', '/cmd_vel_raw')],
         ),
+
+	# Obstacle avoidance — filters /cmd_vel_raw → /cmd_vel
+	Node(
+    	    package='robot_bringup',
+    	    executable='obstacle_avoidance_node',
+    	    name='obstacle_avoidance_node',
+    	    output='screen',
+	),
 
         # RViz2 — camera visual feed with YOLO annotations
         Node(

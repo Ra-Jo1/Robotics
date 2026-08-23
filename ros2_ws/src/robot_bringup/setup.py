@@ -19,8 +19,9 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     entry_points={
-        'console_scripts': [
-            'mecanum_driver_node = robot_bringup.mecanum_driver_node:main',
+	'console_scripts': [
+   	    'mecanum_driver_node = robot_bringup.mecanum_driver_node:main',
+   	    'obstacle_avoidance_node = robot_bringup.obstacle_avoidance_node:main',
         ],
     },
 )

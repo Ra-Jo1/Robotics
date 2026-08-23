@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-mecanum_driver.py
-Pont entre ROS 2 /cmd_vel et l'Arduino Mega via Serial USB.
-Souscrit à /cmd_vel → envoie JSON à l'Arduino.
+mecanum_driver_node.py
+Bridge between ROS 2 /cmd_vel and Arduino Mega via Serial USB.
+Also reads HC-SR04 distance and publishes on /distance topic.
+
+Subscribes to : /cmd_vel (geometry_msgs/Twist)
+Publishes to  : /distance (std_msgs/Float32)
 """
 
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Float32
 import serial
 import json
 import threading
@@ -17,22 +21,22 @@ class MecanumDriver(Node):
     def __init__(self):
         super().__init__('mecanum_driver')
 
-        # Paramètres
-        self.declare_parameter('port', '/dev/ttyACM0')
+        # Parameters
+        self.declare_parameter('port',     '/dev/ttyACM0')
         self.declare_parameter('baudrate', 115200)
 
-        port = self.get_parameter('port').value
+        port     = self.get_parameter('port').value
         baudrate = self.get_parameter('baudrate').value
 
-        # Connexion Serial
+        # Serial connection
         try:
             self.ser = serial.Serial(port, baudrate, timeout=1)
-            self.get_logger().info(f'Arduino connecté sur {port}')
+            self.get_logger().info(f'Arduino connected on {port}')
         except Exception as e:
-            self.get_logger().error(f'Erreur Serial : {e}')
+            self.get_logger().error(f'Serial error: {e}')
             raise
 
-        # Subscriber /cmd_vel
+        # /cmd_vel subscriber
         self.sub = self.create_subscription(
             Twist,
             '/cmd_vel',
@@ -40,34 +44,48 @@ class MecanumDriver(Node):
             10
         )
 
-        # Thread lecture Serial (réponses Arduino)
+        # /distance publisher — HC-SR04 readings
+        self.pub_distance = self.create_publisher(Float32, '/distance', 10)
+
+        # Serial read thread
         self.running = True
         self.read_thread = threading.Thread(target=self.read_serial)
         self.read_thread.daemon = True
         self.read_thread.start()
 
-        self.get_logger().info('MecanumDriver prêt — en attente de /cmd_vel')
+        self.get_logger().info('MecanumDriver ready — waiting for /cmd_vel')
 
     def cmd_vel_callback(self, msg: Twist):
         cmd = {
-            'vx': round(msg.linear.x, 3),
-            'vy': round(msg.linear.y, 3),
+            'vx': round(msg.linear.x,  3),
+            'vy': round(msg.linear.y,  3),
             'wz': round(msg.angular.z, 3),
         }
         line = json.dumps(cmd) + '\n'
         try:
             self.ser.write(line.encode())
         except Exception as e:
-            self.get_logger().error(f'Erreur envoi Serial : {e}')
+            self.get_logger().error(f'Serial send error: {e}')
 
     def read_serial(self):
-        # Lit les réponses de l'Arduino en continu
+        # Continuously reads Arduino responses
         while self.running:
             try:
                 if self.ser.in_waiting:
-                    line = self.ser.readline().decode().strip()
-                    if line:
-                        self.get_logger().info(f'Arduino: {line}')
+                    line = self.ser.readline().decode('utf-8', errors='ignore').strip()
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        # Publish distance if present
+                        if 'dist' in data:
+                            msg = Float32()
+                            msg.data = float(data['dist'])
+                            self.pub_distance.publish(msg)
+                        else:
+                            self.get_logger().info(f'Arduino: {line}')
+                    except json.JSONDecodeError:
+                        pass
             except Exception:
                 pass
 
