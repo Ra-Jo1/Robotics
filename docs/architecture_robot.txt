@@ -1,0 +1,123 @@
+================================================================================
+R_BOT — SYSTEM ARCHITECTURE
+ROS 2 Jazzy Jalisco | Ubuntu 24.04 | Raspberry Pi 5
+================================================================================
+
+HARDWARE
+────────────────────────────────────────────────────────────────────────────────
+Raspberry Pi 5 (4GB)        — Main computer (ROS 2, YOLO, navigation logic)
+Arduino Mega 2560            — Wheels controller (motors + HC-SR04)
+Arduino UNO / Adeept Board   — Arm controller (5 servos)
+LewanSoul Mecanum Chassis    — 4-wheel omnidirectional base (60mm Mecanum)
+2x L298N Motor Driver        — DC motor control (2 motors each)
+4x TT Motors                 — Wheels actuation
+Adeept 5DOF Robot Arm        — Single arm with gripper
+HC-SR04 Ultrasonic Sensor    — Obstacle detection (front, range: 2-400cm)
+USB Webcam                   — Object detection (YOLO)
+
+================================================================================
+NODES
+────────────────────────────────────────────────────────────────────────────────
+/camera_node            robot_perception    Captures webcam → /camera/image_raw
+/yolo_node              robot_perception    YOLOv8 detection → /detections
+/mecanum_driver         robot_bringup       ROS 2 ↔ Arduino Mega (wheels)
+/obstacle_avoidance     robot_bringup       Filters cmd_vel using HC-SR04
+/arm_node               robot_arm           ROS 2 ↔ Arduino Adeept (arm)
+/pick_and_place_node    robot_arm           Decision brain (YOLO → arm)
+
+================================================================================
+TOPICS
+────────────────────────────────────────────────────────────────────────────────
+/camera/image_raw       sensor_msgs/Image           Camera raw frames
+/camera/annotated       sensor_msgs/Image           YOLO annotated frames
+/detections             vision_msgs/Detection2DArray YOLO object detections
+/cmd_vel_raw            geometry_msgs/Twist          Raw teleop commands
+/cmd_vel                geometry_msgs/Twist          Filtered safe commands
+/distance               std_msgs/Float32             HC-SR04 distance (cm)
+/arm_command            std_msgs/String              JSON arm pose commands
+
+================================================================================
+DATA FLOW
+────────────────────────────────────────────────────────────────────────────────
+
+PERCEPTION PIPELINE:
+  Webcam
+    └─→ camera_node ──→ /camera/image_raw
+                              └─→ yolo_node ──→ /detections
+                                           └─→ /camera/annotated ──→ RViz2
+
+PICK & PLACE PIPELINE:
+  /detections
+    └─→ pick_and_place_node ──→ /arm_command
+                                      └─→ arm_node ──→ Serial USB
+                                                          └─→ Arduino UNO
+                                                                └─→ 5 servos
+
+NAVIGATION PIPELINE:
+  Keyboard
+    └─→ teleop_twist_keyboard ──→ /cmd_vel_raw
+                                        └─→ obstacle_avoidance_node
+                                                  ↑
+                                             /distance
+                                                  ↑
+                                            mecanum_driver ←── HC-SR04
+                                                  └─→ /cmd_vel
+                                                        └─→ mecanum_driver
+                                                                └─→ Serial USB
+                                                                      └─→ Arduino Mega
+                                                                            └─→ 2x L298N
+                                                                                  └─→ 4x TT Motors
+
+OBSTACLE AVOIDANCE LOGIC:
+  distance > 40cm  → Normal movement allowed
+  distance < 40cm  → Warning logged
+  distance < 25cm  → Forward movement BLOCKED (lateral + rotation still allowed)
+                      Active stop published at 20Hz
+
+================================================================================
+SERIAL COMMUNICATION
+────────────────────────────────────────────────────────────────────────────────
+Arduino Mega  (/dev/ttyACM0, 115200 baud)
+  RX: {"vx": 0.5, "vy": 0.0, "wz": 0.0}   ← motor commands
+  TX: {"dist": 45.2}                         ← HC-SR04 distance
+  TX: {"status": "ready"}                    ← startup confirmation
+
+Arduino UNO   (/dev/ttyUSB0, 9600 baud)
+  RX: {"s1":90, "s2":90, "s3":10, "s4":90, "s5":20}  ← servo angles
+  TX: {"status": "home"}                               ← confirmation
+
+================================================================================
+LAUNCH
+────────────────────────────────────────────────────────────────────────────────
+ros2 launch robot_bringup robot.launch.py
+
+Starts all nodes:
+  camera_node, yolo_node, mecanum_driver_node,
+  obstacle_avoidance_node, arm_node, pick_and_place_node,
+  teleop (xterm), rviz2
+
+================================================================================
+MILESTONES COMPLETED
+────────────────────────────────────────────────────────────────────────────────
+[x] Gazebo Harmonic simulation (Mecanum robot + teleop)
+[x] YOLOv8 object detection in ROS 2
+[x] Physical Mecanum chassis (4x TT motors + 2x L298N)
+[x] ROS 2 ↔ Arduino Serial bridge (mecanum_driver)
+[x] Adeept 5DOF arm integration
+[x] Pick & place (YOLO triggered, automatic sequence)
+[x] Raspberry Pi 5 — full autonomous system
+[x] HC-SR04 obstacle avoidance (active stop at 25cm)
+[ ] LiDAR SLAM + Nav2 autonomous navigation (pending)
+[ ] OLED display — companion robot eyes (pending)
+
+================================================================================
+STACK
+────────────────────────────────────────────────────────────────────────────────
+OS          : Ubuntu 24.04 LTS (Desktop)
+ROS         : ROS 2 Jazzy Jalisco
+Simulation  : Gazebo Harmonic 8.11.0
+Detection   : YOLOv8n (Ultralytics)
+Firmware    : Arduino IDE (C++)
+Language    : Python 3.12 (ROS nodes), C++ (Arduino)
+Version     : Git / GitHub (Ra-Jo1/Robotics)
+================================================================================
