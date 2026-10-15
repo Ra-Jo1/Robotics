@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 obstacle_avoidance_node.py
-Reads /distance from HC-SR04 and modifies /cmd_vel to avoid obstacles.
+Reads /distance from HC-SR04 and blocks forward movement when obstacle detected.
 
 Subscribes to : /distance     (std_msgs/Float32)
                /cmd_vel_raw   (geometry_msgs/Twist) — teleop input
@@ -14,7 +14,7 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 
 
-# Distance threshold in cm — stop if obstacle closer than this
+# Distance thresholds in cm
 STOP_DISTANCE    = 25.0
 WARNING_DISTANCE = 40.0
 
@@ -23,7 +23,8 @@ class ObstacleAvoidanceNode(Node):
     def __init__(self):
         super().__init__('obstacle_avoidance_node')
 
-        self.current_distance = 999.0  # Default — no obstacle
+        self.current_distance = 999.0
+        self.blocked = False
 
         # Subscribe to raw teleop commands
         self.sub_teleop = self.create_subscription(
@@ -44,6 +45,9 @@ class ObstacleAvoidanceNode(Node):
         # Publish filtered cmd_vel
         self.pub_cmd = self.create_publisher(Twist, '/cmd_vel', 10)
 
+        # Timer — actively publishes stop at 20Hz when obstacle detected
+        self.timer = self.create_timer(0.05, self.safety_timer_callback)
+
         self.get_logger().info(
             f'ObstacleAvoidanceNode ready — '
             f'stop threshold: {STOP_DISTANCE}cm'
@@ -51,31 +55,34 @@ class ObstacleAvoidanceNode(Node):
 
     def distance_callback(self, msg: Float32):
         self.current_distance = msg.data
+        self.blocked = self.current_distance < STOP_DISTANCE
 
-        if self.current_distance < STOP_DISTANCE:
+        if self.blocked:
             self.get_logger().warn(
-                f'Obstacle detected at {self.current_distance:.1f}cm — STOP!'
+                f'OBSTACLE at {self.current_distance:.1f}cm — BLOCKED!',
+                throttle_duration_sec=1.0
             )
         elif self.current_distance < WARNING_DISTANCE:
             self.get_logger().info(
-                f'Obstacle approaching: {self.current_distance:.1f}cm'
+                f'Obstacle approaching: {self.current_distance:.1f}cm',
+                throttle_duration_sec=2.0
             )
+
+    def safety_timer_callback(self):
+        # Actively publish stop at 20Hz when blocked — overrides teleop
+        if self.blocked:
+            self.pub_cmd.publish(Twist())
 
     def teleop_callback(self, msg: Twist):
-        filtered = Twist()
-
-        # Block forward movement if obstacle too close
-        if (self.current_distance < STOP_DISTANCE and msg.linear.x > 0):
-            self.get_logger().warn(
-                f'Forward blocked — obstacle at {self.current_distance:.1f}cm'
-            )
-            filtered.linear.x  = 0.0
-            filtered.linear.y  = msg.linear.y   # Allow lateral movement
-            filtered.angular.z = msg.angular.z  # Allow rotation
+        # If blocked and trying to go forward — block it
+        if self.blocked and msg.linear.x > 0:
+            stopped = Twist()
+            stopped.linear.y  = msg.linear.y    # Allow lateral movement
+            stopped.angular.z = msg.angular.z   # Allow rotation
+            self.pub_cmd.publish(stopped)
         else:
-            filtered = msg  # Pass through normally
-
-        self.pub_cmd.publish(filtered)
+            # Pass through normally
+            self.pub_cmd.publish(msg)
 
 
 def main(args=None):
