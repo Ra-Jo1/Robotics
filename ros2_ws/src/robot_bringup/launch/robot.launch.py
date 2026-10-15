@@ -24,7 +24,7 @@ def generate_launch_description():
 
         # Mecanum driver — bridges /cmd_vel to Arduino Mega (wheels)
         Node(
-            package='robot_bringup',
+            package='robot_navigation',
             executable='mecanum_driver_node',
             name='mecanum_driver',
             output='screen',
@@ -69,7 +69,7 @@ def generate_launch_description():
 
 	# Obstacle avoidance — filters /cmd_vel_raw → /cmd_vel
 	Node(
-    	    package='robot_bringup',
+    	    package='robot_navigation',
     	    executable='obstacle_avoidance_node',
     	    name='obstacle_avoidance_node',
     	    output='screen',
