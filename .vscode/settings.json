@@ -5,5 +5,6 @@
   ],
   "python.analysis.extraPaths": [
     "/opt/ros/jazzy/lib/python3.12/site-packages"
-  ]
+  ],
+  "cmake.sourceDirectory": "C:/Users/rajon/Documents/GitHub/Robotics/ros2_ws/src/robot_bringup"
 }
