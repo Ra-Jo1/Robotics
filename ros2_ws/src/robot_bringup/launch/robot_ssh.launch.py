@@ -1,3 +1,4 @@
+
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
@@ -25,7 +26,7 @@ def generate_launch_description():
             output='screen',
         ),
 
-        # Arm node — only if /dev/ttyUSB0 exists
+        # Arm node
         Node(
             package='robot_arm',
             executable='arm_node',
@@ -62,4 +63,26 @@ def generate_launch_description():
             parameters=[{'dry_run': False}]
         ),
 
+        # PS4 joystick driver
+        Node(
+            package='joy',
+            executable='joy_node',
+            name='joy_node',
+            output='screen',
+            parameters=[{'device_id': 0}]
+        ),
+
+        # PS4 joystick teleoperation
+        Node(
+            package='teleop_twist_joy',
+            executable='teleop_node',
+            name='teleop_twist_joy',
+            output='screen',
+            parameters=[
+                '/home/jo/Robotics/ros2_ws/src/robot_bringup/config/ps4_joy.yaml'
+            ],
+            remappings=[
+                ('/cmd_vel', '/cmd_vel_raw')
+            ]
+        ),
     ])

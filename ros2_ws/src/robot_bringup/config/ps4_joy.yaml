@@ -1,0 +1,14 @@
+teleop_twist_joy:
+  ros__parameters:
+    axis_linear:
+      x: 1       # Left stick vertical → move forward/backward
+      y: 0       # Left stick horizontal → strafe sideways
+    axis_angular:
+      yaw: 3     # Right stick horizontal → rotate
+    scale_linear:
+      x: 0.5     # Maximum forward speed (m/s)
+      y: -0.5    # Maximum lateral speed (m/s)
+    scale_angular:
+      yaw: 0.5   # Maximum rotation speed (rad/s)
+    enable_button: 4           # L1 → hold to enable movement
+    enable_turbo_button: 5     # R1 → turbo mode (maximum speed)
