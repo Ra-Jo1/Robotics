@@ -1,3 +1,5 @@
+https://github.com/user-attachments/assets/7ccbfa2d-4ed6-4ec8-95e6-253eeb407476
+
 Overview :
 
 This repository reflects my ongoing career transition from **Data Engineering** to **Robotics Engineering**. After several years working with data pipelines, distributed systems, data migration, I have decided to pivot toward robotics.
