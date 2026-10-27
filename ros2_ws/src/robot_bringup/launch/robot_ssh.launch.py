@@ -85,4 +85,12 @@ def generate_launch_description():
                 ('/cmd_vel', '/cmd_vel_raw')
             ]
         ),
+
+        # Arm teleop — PS4 control for the arm
+        Node(
+            package='robot_arm',
+            executable='arm_teleop_node',
+            name='arm_teleop_node',
+            output='screen',
+        ),
     ])

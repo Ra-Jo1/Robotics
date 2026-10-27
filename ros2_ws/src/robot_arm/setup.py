@@ -17,6 +17,7 @@ setup(
         'console_scripts': [
             'arm_node = robot_arm.arm_node:main',
             'pick_and_place_node = robot_arm.pick_and_place_node:main',
+            'arm_teleop_node     = robot_arm.arm_teleop_node:main',
         ],
     },
 )
